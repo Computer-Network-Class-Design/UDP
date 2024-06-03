@@ -34,7 +34,7 @@
 
 ## Server
 
-The udp server can be started a three ways.
+The udp server can be started in the following ways.
 
 | Verbose Commands                            | Brief Commands                        | Demonstration                                 |
 | ------------------------------------------- | ------------------------------------- | --------------------------------------------- |
