@@ -2,6 +2,7 @@ import socket
 import string
 import random
 import argparse
+import statistics
 
 from util import Retry, SeqID
 from config import Settings
@@ -51,7 +52,6 @@ class UDPClient:
     def send(self, syn: bool = False, fin: bool = False) -> str:
         msg_to_send = self._generate_msg(syn, fin).encode(Settings.FORMAT)
         self.client.sendto(msg_to_send, self.server_addr)
-        print("Message sent: ", msg_to_send)
 
         self.client.settimeout(retry._timeout)
         try:
@@ -62,13 +62,52 @@ class UDPClient:
 
         return msg
 
+    def dump(self):
+        print("Packets Received:".ljust(25), self.packets_received)
+        print(
+            "Packets Loss:".ljust(25),
+            f"{(1 - self.packets_received / self.packets_to_send) * 100}%",
+        )
+
+        if self.round_trip_time:
+            print("Max  RTT:".ljust(25), f"{max(self.round_trip_time)}s")
+            print("Min  RTT:".ljust(25), f"{min(self.round_trip_time)}s")
+            print(
+                "Mean RTT:".ljust(25),
+                f"{sum(self.round_trip_time) / len(self.round_trip_time)}s",
+            )
+        else:
+            print("Max  RTT:".ljust(25), "No VALID data!")
+            print("Min  RTT:".ljust(25), "No VALID data!")
+            print("Mean RTT:".ljust(25), "No VALID data!")
+
+        if len(self.round_trip_time) > 1:
+            print(
+                "Standard RTT Deviation:".ljust(25),
+                f"{statistics.stdev(self.round_trip_time)}s",
+            )
+        else:
+            print("Not enough data to support standard deviation calculation!")
+
+        if self.initial_response and self.final_response:
+            print(
+                "Server Response:".ljust(25),
+                f"{self.final_response - self.initial_response}s",
+            )
+        else:
+            print(
+                "Server Response:".ljust(25), "Infinite (due to extreme packet loss)."
+            )
+
     def run(self):
         print("Client starts.")
         self.send(syn=True, fin=False)
-        for _ in range(self.packets_to_send):
+        for _ in range(Settings.PACKETS):
             self.send()
         self.send(syn=False, fin=True)
+
         self.client.close()
+        self.dump()
 
 
 if __name__ == "__main__":

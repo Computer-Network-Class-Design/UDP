@@ -1,6 +1,8 @@
 import socket
 import random
 import datetime
+import argparse
+import threading
 
 from typing import Tuple
 
@@ -8,11 +10,9 @@ from config import Settings
 
 
 class UDPServer:
-    def __init__(self):
+    def __init__(self, server_ip: str = Settings.IP, server_port: int = Settings.PORT):
         self.server = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        self.server.bind((Settings.IP, Settings.PORT))
-
-        self.initial_response = self.final_response = None
+        self.server.bind((server_ip, server_port))
 
     @staticmethod
     def __emulate_loss() -> bool:
@@ -24,10 +24,10 @@ class UDPServer:
                 return "".join([s, " " * (Settings.CONTENT - len(s))])
             return s[Settings.CONTENT]
 
-        curr_time = int(datetime.datetime.now().timestamp())
+        curr_time = datetime.datetime.now().timestamp()
 
         msg = msg.decode(Settings.FORMAT)
-        seq, ver, syn, fin, content = (
+        seq, ver, syn, fin, _ = (
             msg[:16],
             msg[16:24],
             int(msg[24]),
@@ -35,21 +35,19 @@ class UDPServer:
             msg[26::].strip(),
         )
 
-        print("Entering handle client")
-        print("seq =", seq, "ver =", ver, "syn =", syn, "fin =", fin)
-
-        if not syn and not self.initial_response:
-            self.initial_response = curr_time
-        if not syn and not fin:
-            self.final_response = curr_time
-
         if syn:
             msg_to_send = "".join(
-                [seq, ver, str(syn), str(fin), pad_string(content)]
+                [seq, ver, str(syn), str(fin), pad_string(str(curr_time))]
             ).encode(Settings.FORMAT)
         elif fin:
             msg_to_send = "".join(
-                [seq, ver, str(syn), str(fin), pad_string(Settings.FIN_ACK)]
+                [
+                    seq,
+                    ver,
+                    str(syn),
+                    str(fin),
+                    pad_string(str(curr_time) + Settings.FIN_ACK),
+                ]
             ).encode(Settings.FORMAT)
         else:
             msg_to_send = "".join(
@@ -57,18 +55,39 @@ class UDPServer:
             ).encode(Settings.FORMAT)
 
         self.server.sendto(msg_to_send, addr)
+        print("Message sent:", msg_to_send)
 
         return fin == 1
 
     def run(self) -> None:
-        print(f"Server starts at {Settings.IP} & {Settings.PORT}")
+        print(f"Server starts at [IP: {Settings.IP}] and [Port: {Settings.PORT}]")
         while True:
             msg, addr = self.server.recvfrom(Settings.BUFF_SIZE)
 
-            print("Message received", msg)
-            if UDPServer.__emulate_loss() and self._handle_client(msg, addr):
-                break
+            print("Message received:", msg)
+            if UDPServer.__emulate_loss():
+                client = threading.Thread(target=self._handle_client, args=(msg, addr))
+                client.start()
+                client.join()
 
 
-server = UDPServer()
-server.run()
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "-sip",
+        "--serverIP",
+        type=str,
+        default="127.0.0.1",
+        help="The IP address of the server",
+    )
+
+    parser.add_argument(
+        "-spt", "--serverPort", type=int, default=8000, help="The port of the server"
+    )
+
+    args = parser.parse_args()
+    Settings.IP = args.serverIP
+    Settings.PORT = args.serverPort
+
+    server = UDPServer(Settings.IP, Settings.PORT)
+    server.run()
