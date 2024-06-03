@@ -1,7 +1,10 @@
 import time
+import re
 
 from typing import Callable
 from config import Settings
+
+pattern = re.compile(r"^\d+(\.\d+)*")
 
 
 class SeqID:
@@ -36,6 +39,8 @@ class Retry:
     def timeout(self):
         def decorator(original_function: Callable):
             def wrapper(*args, **kwargs):
+                client = args[0]
+
                 msg = None
                 retry_count = self._retry + 1
 
@@ -46,6 +51,17 @@ class Retry:
                     while not msg and end - start < self._timeout:
                         end = time.time()
                     retry_count -= 1
+
+                client.packets_to_send += self._retry - retry_count
+
+                if msg:
+                    client.packets_received += 1
+                    client.round_trip_time.append(end - start)
+
+                    server_time = float(pattern.match(msg[26::]).group(0))
+                    if not client.initial_response:
+                        client.initial_response = server_time
+                    client.final_response = server_time
 
                 return msg
 
