@@ -49,8 +49,10 @@ class UDPClient:
         return "".join(msg_to_send)
 
     @retry.timeout()
-    def send(self, syn: bool = False, fin: bool = False) -> str:
-        msg_to_send = self._generate_msg(syn, fin).encode(Settings.FORMAT)
+    def send(self, syn: bool = False, fin: bool = False, **retry_msg) -> str:
+        msg_to_send = retry_msg.get("resend", None)
+        if not msg_to_send:
+            msg_to_send = self._generate_msg(syn, fin).encode(Settings.FORMAT)
         self.client.sendto(msg_to_send, self.server_addr)
 
         self.client.settimeout(retry._timeout)
@@ -60,7 +62,7 @@ class UDPClient:
         except socket.timeout:
             msg = None
 
-        return msg
+        return msg, msg_to_send
 
     def dump(self):
         print("Packets Received:".ljust(25), self.packets_received)
@@ -101,9 +103,15 @@ class UDPClient:
 
     def run(self):
         print("Client starts.")
-        self.send(syn=True, fin=False)
+        try:
+            self.send(syn=True, fin=False)
+        except ConnectionAbortedError:
+            self.client.close()
+            return
+
         for _ in range(Settings.PACKETS):
             self.send()
+
         self.send(syn=False, fin=True)
 
         self.client.close()

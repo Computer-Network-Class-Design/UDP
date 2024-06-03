@@ -41,12 +41,16 @@ class Retry:
             def wrapper(*args, **kwargs):
                 client = args[0]
 
-                msg = None
+                msg, resend = None, None
                 retry_count = self._retry + 1
 
                 while retry_count > 0 and not msg:
                     start = time.time()
-                    msg = original_function(*args, **kwargs)
+
+                    msg, send = original_function(*args, **kwargs, resend=resend)
+                    if not resend:
+                        resend = send
+
                     end = time.time()
                     while not msg and end - start < self._timeout:
                         end = time.time()
@@ -62,6 +66,16 @@ class Retry:
                     if not client.initial_response:
                         client.initial_response = server_time
                     client.final_response = server_time
+
+                    print("Sequence No:".ljust(15), send[:16])
+                    print("Server IP:".ljust(15), Settings.IP)
+                    print("Server Port:".ljust(15), Settings.PORT)
+                    print("RTT:".ljust(15), end - start)
+                else:
+                    print("Sequence No:".ljust(15), send[:16], "Request time out.")
+                    if send[:16] == b"0" * (Settings.SEQ_NUM * 8):
+                        raise ConnectionAbortedError("SYN not responded")
+                print("- " * 16)
 
                 return msg
 
