@@ -40,10 +40,11 @@ The udp server can be started in the following ways.
 | ------------------------------------------- | ------------------------------------- | --------------------------------------------- |
 | `python -m udp_server --serverIP=localhost` | `python -m udp_server -sip=localhost` | To start the server with specific IP address  |
 | `python -m udp_server --serverPort=8000`    | `python -m udp_server -spt=8000`      | To start the server with specific port number |
+| `python -m udp_server --loss=0.2`           | `python -m udp_server -lo=0.2`        | To start the server with specific loss rate   |
 
 Of course, you can combine **any** / **all** / **none** of the commands above to initialize the server socket.
 
-> If you choose to exclude all parameters, the server will run with default settings, i.e. `serverIP=127.0.0.1` & `serverPort=8000`.
+> If you choose to exclude all parameters, the server will run with default settings, i.e. `serverIP=127.0.0.1` & `serverPort=8000` & `loss=0.05`.
 
 ## Client
 
@@ -58,4 +59,4 @@ The udp client class offers flexible choices to configure as you like.
 
 Of course, you can combine **any** / **all** / **none** of the commands above to fully customize your client socket.
 
-> If you choose to exclude all parameters, the client will run with default settings, i.e. `serverIP=127.0.0.1` & `serverPort=8000`.
+> If you choose to exclude all parameters, the client will run with default settings, i.e. `serverIP=127.0.0.1` & `serverPort=8000` & `timeout=0.1` & `retry=2`.

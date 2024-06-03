@@ -9,6 +9,18 @@ from typing import Tuple
 from config import Settings
 
 
+def float_in_range(value: str):
+    try:
+        number = float(value)
+    except ValueError:
+        raise argparse.ArgumentTypeError(f"{value} is not a valid float")
+
+    if not (0 <= number <= 1.0):
+        raise argparse.ArgumentTypeError(f"{value} is out of range (0.0 to 1.0)")
+
+    return number
+
+
 class UDPServer:
     def __init__(self, server_ip: str = Settings.IP, server_port: int = Settings.PORT):
         self.server = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -85,9 +97,18 @@ if __name__ == "__main__":
         "-spt", "--serverPort", type=int, default=8000, help="The port of the server"
     )
 
+    parser.add_argument(
+        "-lo",
+        "--loss",
+        type=float_in_range,
+        default=0.05,
+        help="Customize the loss rate for server",
+    )
+
     args = parser.parse_args()
     Settings.IP = args.serverIP
     Settings.PORT = args.serverPort
+    Settings.LOSS = args.loss
 
     server = UDPServer(Settings.IP, Settings.PORT)
     server.run()
