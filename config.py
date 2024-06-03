@@ -40,3 +40,6 @@ class Settings:
 
     # Fin ACK
     FIN_ACK = "acknowledged".upper()
+
+    # Total packets to send
+    PACKETS = 12
