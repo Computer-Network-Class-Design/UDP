@@ -46,8 +46,8 @@ The udp client class offers flexible choices to configure as you like.
 
 | Verbose Commands                            | Brief Commands                         | Docs                                                  |
 | ------------------------------------------- | -------------------------------------- | ----------------------------------------------------- |
-| `python -m udp_client --serverIP=localhost` | `python -m udp_client --sip=localhost` | To initialize the client with a specific IP address.  |
-| `python -m udp_client --serverPort=8000`    | `python -m udp_client --spt=8000`      | To initialize the client with a specific Port number. |
+| `python -m udp_client --serverIP=localhost` | `python -m udp_client -sip=localhost`  | To initialize the client with a specific IP address.  |
+| `python -m udp_client --serverPort=8000`    | `python -m udp_client -spt=8000`       | To initialize the client with a specific Port number. |
 | `python -m udp_client --timeout=0.2`        | `python -m udp_client -t=0.2`          | Set timeout for client to receive responses.          |
 | `python -m udp_client --retry=2`            | `python -m udp_client -r=2`            | Set maximum retries if the server does not respond.   |
 
