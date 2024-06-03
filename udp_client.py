@@ -1,6 +1,7 @@
 import socket
 import string
 import random
+import argparse
 
 from util import Retry, SeqID
 from config import Settings
@@ -10,11 +11,16 @@ retry = Retry(timeout=0.1, retry=2)
 
 
 class UDPClient:
-    def __init__(self, server_ip: str = "127.0.0.1", server_port: int = 8000):
+    def __init__(self, server_ip: str = Settings.IP, server_port: int = Settings.PORT):
         SeqID.reset()
 
         self.server_addr = (server_ip, server_port)
         self.client = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+
+        self.packets_received = 0
+        self.packets_to_send = Settings.PACKETS + 2
+        self.round_trip_time = []
+        self.initial_response = self.final_response = None
 
     def _generate_seq(self) -> str:
         return next(SeqID())
@@ -47,7 +53,7 @@ class UDPClient:
         self.client.sendto(msg_to_send, self.server_addr)
         print("Message sent: ", msg_to_send)
 
-        self.client.settimeout(0.1)
+        self.client.settimeout(retry._timeout)
         try:
             msg, _ = self.client.recvfrom(Settings.BUFF_SIZE)
             msg = msg.decode(Settings.FORMAT)
@@ -59,10 +65,38 @@ class UDPClient:
     def run(self):
         print("Client starts.")
         self.send(syn=True, fin=False)
-        self.send()
+        for _ in range(self.packets_to_send):
+            self.send()
         self.send(syn=False, fin=True)
         self.client.close()
 
 
-client = UDPClient()
-client.run()
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "-sip",
+        "--serverIP",
+        type=str,
+        default="127.0.0.1",
+        help="The IP address of the server",
+    )
+    parser.add_argument(
+        "-spt", "--serverPort", type=int, default=8000, help="The port of the server"
+    )
+    parser.add_argument(
+        "-t", "--timeout", type=float, default=0.1, help="Timeout duration in seconds"
+    )
+    parser.add_argument(
+        "-r", "--retry", type=int, default=2, help="Number of retry attempts"
+    )
+
+    args = parser.parse_args()
+
+    server_ip = args.serverIP
+    server_port = args.serverPort
+
+    retry._timeout = args.timeout
+    retry._retry = args.retry
+
+    client = UDPClient(server_ip, server_port)
+    client.run()

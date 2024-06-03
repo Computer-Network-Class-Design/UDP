@@ -39,19 +39,13 @@ class Retry:
                 msg = None
                 retry_count = self._retry + 1
 
-                print("Initial retry: ", retry_count)
-
                 while retry_count > 0 and not msg:
-                    print("Entering for loop")
                     start = time.time()
                     msg = original_function(*args, **kwargs)
                     end = time.time()
                     while not msg and end - start < self._timeout:
                         end = time.time()
-                        print("Triggered")
                     retry_count -= 1
-
-                    print("retrying: ", retry_count)
 
                 return msg
 
