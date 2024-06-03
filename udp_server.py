@@ -4,7 +4,7 @@ import datetime
 
 from typing import Tuple
 
-from .config import Settings
+from config import Settings
 
 
 class UDPServer:
@@ -21,7 +21,7 @@ class UDPServer:
     def _handle_client(self, msg: bytes, addr: Tuple[str, int]):
         def pad_string(s: str) -> str:
             if len(s) < Settings.CONTENT:
-                return "".join(s, " " * (Settings.CONTENT - len(s)))
+                return "".join([s, " " * (Settings.CONTENT - len(s))])
             return s[Settings.CONTENT]
 
         curr_time = int(datetime.datetime.now().timestamp())
@@ -34,6 +34,9 @@ class UDPServer:
             int(msg[25]),
             msg[26::].strip(),
         )
+
+        print("Entering handle client")
+        print("seq =", seq, "ver =", ver, "syn =", syn, "fin =", fin)
 
         if not syn and not self.initial_response:
             self.initial_response = curr_time
@@ -58,8 +61,14 @@ class UDPServer:
         return fin == 1
 
     def run(self) -> None:
+        print(f"Server starts at {Settings.IP} & {Settings.PORT}")
         while True:
             msg, addr = self.server.recvfrom(Settings.BUFF_SIZE)
 
+            print("Message received", msg)
             if UDPServer.__emulate_loss() and self._handle_client(msg, addr):
                 break
+
+
+server = UDPServer()
+server.run()
