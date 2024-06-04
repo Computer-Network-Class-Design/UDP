@@ -56,7 +56,7 @@ class Retry:
                         end = time.time()
                     retry_count -= 1
 
-                client.packets_to_send += self._retry - retry_count
+                client.packets_to_send += self._retry - retry_count + 1
 
                 if msg:
                     client.packets_received += 1

@@ -19,7 +19,7 @@ class UDPClient:
         self.client = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
         self.packets_received = 0
-        self.packets_to_send = Settings.PACKETS + 2
+        self.packets_to_send = 0
         self.round_trip_time = []
         self.initial_response = self.final_response = None
 
