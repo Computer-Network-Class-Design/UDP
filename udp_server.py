@@ -7,18 +7,7 @@ import threading
 from typing import Tuple
 
 from config import Settings
-
-
-def float_in_range(value: str):
-    try:
-        number = float(value)
-    except ValueError:
-        raise argparse.ArgumentTypeError(f"{value} is not a valid float")
-
-    if not (0 <= number <= 1.0):
-        raise argparse.ArgumentTypeError(f"{value} is out of range (0.0 to 1.0)")
-
-    return number
+from util import CustomArgParser
 
 
 class UDPServer:
@@ -40,11 +29,18 @@ class UDPServer:
 
         msg = msg.decode(Settings.FORMAT)
         seq, ver, syn, fin, _ = (
-            msg[:16],
-            msg[16:24],
-            int(msg[24]),
-            int(msg[25]),
-            msg[26::].strip(),
+            msg[: Settings.SEQ_NUM],
+            msg[Settings.SEQ_NUM : (Settings.SEQ_NUM + Settings.VER_NUM)],
+            int(msg[Settings.SEQ_NUM + Settings.VER_NUM]),
+            int(msg[Settings.SYN_BIT + Settings.SEQ_NUM + Settings.VER_NUM]),
+            msg[
+                (
+                    Settings.FIN_BIT
+                    + Settings.SYN_BIT
+                    + Settings.SEQ_NUM
+                    + Settings.VER_NUM
+                ) : :
+            ].strip(),
         )
 
         if syn:
@@ -100,7 +96,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "-lo",
         "--loss",
-        type=float_in_range,
+        type=CustomArgParser.float_in_range,
         default=0.05,
         help="Customize the loss rate for server",
     )
