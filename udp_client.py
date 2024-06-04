@@ -27,7 +27,7 @@ class UDPClient:
         return next(SeqID())
 
     def _generate_ver(self) -> str:
-        return "0" * (Settings.VER_NUM * 8 - 1) + "2"
+        return "0" * (Settings.VER_NUM - 1) + "2"
 
     def _generate_random_content(self) -> str:
         return "".join(random.choice(characters) for _ in range(Settings.CONTENT))

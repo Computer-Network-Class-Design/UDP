@@ -1,5 +1,6 @@
 import time
 import re
+import argparse
 
 from typing import Callable
 from config import Settings
@@ -18,17 +19,16 @@ class SeqID:
         return self
 
     @staticmethod
-    def _to_binary(seq_id: int):
-        bin_seq_id = bin(seq_id)[2::]
-        seq_length = Settings.SEQ_NUM * 8
-        if len(bin_seq_id) < seq_length:
-            return "0" * (seq_length - len(bin_seq_id)) + bin_seq_id
-        return bin_seq_id
+    def __format(seq_id: int):
+        str_seq_id = str(seq_id)
+        if len(str_seq_id) < Settings.SEQ_NUM:
+            return "0" * (Settings.SEQ_NUM - len(str_seq_id)) + str_seq_id
+        return str_seq_id
 
     def __next__(self):
         curr = SeqID.seq
         SeqID.seq += 1
-        return SeqID._to_binary(curr)
+        return SeqID.__format(curr)
 
 
 class Retry:
@@ -62,18 +62,32 @@ class Retry:
                     client.packets_received += 1
                     client.round_trip_time.append(end - start)
 
-                    server_time = float(pattern.match(msg[26::]).group(0))
+                    server_time = float(
+                        pattern.match(
+                            msg[
+                                Settings.FIN_BIT
+                                + Settings.SYN_BIT
+                                + Settings.SEQ_NUM
+                                + Settings.VER_NUM : :
+                            ]
+                        ).group(0)
+                    )
+
                     if not client.initial_response:
                         client.initial_response = server_time
                     client.final_response = server_time
 
-                    print("Sequence No:".ljust(15), send[:16])
+                    print("Sequence No:".ljust(15), send[: Settings.SEQ_NUM])
                     print("Server IP:".ljust(15), Settings.IP)
                     print("Server Port:".ljust(15), Settings.PORT)
                     print("RTT:".ljust(15), end - start)
                 else:
-                    print("Sequence No:".ljust(15), send[:16], "Request time out.")
-                    if send[:16] == b"0" * (Settings.SEQ_NUM * 8):
+                    print(
+                        "Sequence No:".ljust(15),
+                        send[: Settings.SEQ_NUM],
+                        "Request time out.",
+                    )
+                    if send[: Settings.SEQ_NUM] == b"0" * (Settings.SEQ_NUM):
                         raise ConnectionAbortedError("SYN not responded")
                 print("- " * 16)
 
@@ -82,3 +96,17 @@ class Retry:
             return wrapper
 
         return decorator
+
+
+class CustomArgParser:
+    @staticmethod
+    def float_in_range(value: str):
+        try:
+            number = float(value)
+        except ValueError:
+            raise argparse.ArgumentTypeError(f"{value} is not a valid float")
+
+        if not (0 <= number <= 1.0):
+            raise argparse.ArgumentTypeError(f"{value} is out of range (0.0 to 1.0)")
+
+        return number
