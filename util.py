@@ -87,7 +87,7 @@ class Retry:
                         send[: Settings.SEQ_NUM],
                         "Request time out.",
                     )
-                    if send[:16] == b"0" * (Settings.SEQ_NUM * 8):
+                    if send[: Settings.SEQ_NUM] == b"0" * (Settings.SEQ_NUM):
                         raise ConnectionAbortedError("SYN not responded")
                 print("- " * 16)
 
