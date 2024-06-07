@@ -78,8 +78,8 @@ class Retry:
                     client.final_response = server_time
 
                     print("Sequence No:".ljust(15), send[: Settings.SEQ_NUM])
-                    print("Server IP:".ljust(15), Settings.IP)
-                    print("Server Port:".ljust(15), Settings.PORT)
+                    print("Server IP:".ljust(15), client.server_addr[0])
+                    print("Server Port:".ljust(15), client.server_addr[1])
                     print("RTT:".ljust(15), end - start)
                 else:
                     print(
