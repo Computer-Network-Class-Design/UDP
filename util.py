@@ -9,6 +9,11 @@ pattern = re.compile(r"^\d+(\.\d+)*")
 
 
 class SeqID:
+    """
+    This class implements an iterator such that by calling next(SeqID),
+    a new sequence number is returned
+    """
+
     seq = 0
 
     @classmethod
@@ -32,6 +37,10 @@ class SeqID:
 
 
 class Retry:
+    """
+    This class intends to include multiple retry mechanism (for now, it's only timeout).
+    """
+
     def __init__(self, timeout: float = 0.1, retry: int = 2):
         self._timeout = timeout
         self._retry = retry
@@ -46,14 +55,11 @@ class Retry:
 
                 while retry_count > 0 and not msg:
                     start = time.time()
-
                     msg, send = original_function(*args, **kwargs, resend=resend)
                     if not resend:
                         resend = send
-
                     end = time.time()
-                    while not msg and end - start < self._timeout:
-                        end = time.time()
+
                     retry_count -= 1
 
                 client.packets_to_send += self._retry - retry_count + 1
