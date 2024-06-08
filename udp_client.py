@@ -13,7 +13,7 @@ retry = Retry(timeout=0.1, retry=2)
 
 class UDPClient:
     def __init__(self, server_ip: str = Settings.IP, server_port: int = Settings.PORT):
-        SeqID.reset()
+        SeqID.reset()  # Reset the sequence number
 
         self.server_addr = (server_ip, server_port)
         self.client = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -23,15 +23,19 @@ class UDPClient:
         self.round_trip_time = []
         self.initial_response = self.final_response = None
 
+    # A wrapper for generating the next sequence number
     def _generate_seq(self) -> str:
         return next(SeqID())
 
+    # A utility function for generating ver number
     def _generate_ver(self) -> str:
         return "0" * (Settings.VER_NUM - 1) + "2"
 
+    # A utility function for generating random content
     def _generate_random_content(self) -> str:
         return "".join(random.choice(characters) for _ in range(Settings.CONTENT))
 
+    # A utility function for generating the actual message to send
     def _generate_msg(self, syn: bool, fin: bool):
         msg_to_send = [
             self._generate_seq(),
@@ -48,6 +52,7 @@ class UDPClient:
 
         return "".join(msg_to_send)
 
+    # The actual send method (With timeout decorator)
     @retry.timeout()
     def send(self, syn: bool = False, fin: bool = False, **retry_msg) -> str:
         msg_to_send = retry_msg.get("resend", None)
@@ -64,6 +69,7 @@ class UDPClient:
 
         return msg, msg_to_send
 
+    # Display useful info
     def dump(self):
         print("Packets Received:".ljust(25), self.packets_received)
         print(

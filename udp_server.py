@@ -15,10 +15,12 @@ class UDPServer:
         self.server = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.server.bind((server_ip, server_port))
 
+    # Determine whether to drop an incoming packet
     @staticmethod
     def __emulate_loss() -> bool:
         return random.random() >= Settings.LOSS
 
+    # Decode the message and send the reply
     def _handle_client(self, msg: bytes, addr: Tuple[str, int]):
         def pad_string(s: str) -> str:
             if len(s) < Settings.CONTENT:
