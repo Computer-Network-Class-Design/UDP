@@ -11,7 +11,7 @@ pattern = re.compile(r"^\d+(\.\d+)*")
 class SeqID:
     """
     This class implements an iterator such that by calling next(SeqID),
-    a new sequence number is returned
+    a new sequence number is returned.
     """
 
     seq = 0
